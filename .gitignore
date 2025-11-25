@@ -1,0 +1,69 @@
+############################
+# Build / Simulation Artifacts
+############################
+
+# Icarus Verilog output files
+*.vvp
+*.vcd
+*.lxt
+*.fst
+*.out
+
+# Our build directory
+build/
+
+############################
+# Waveform viewer files
+############################
+*.gtkw       # GTKWave save files
+*.sav        # alternative waveform save formats
+
+############################
+# Editor / IDE Files
+############################
+
+# VS Code workspace settings (but keep .vscode/settings.json if you want)
+.vscode/
+!.vscode/tasks.json
+!.vscode/settings.json
+
+# JetBrains / Eclipse / others
+.idea/
+*.iml
+.project
+.cproject
+.settings/
+
+############################
+# OS / Editor Temp Files
+############################
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Vim / Emacs / nano
+*~
+.*.swp
+.*.swo
+
+############################
+# Logs
+############################
+*.log
+
+############################
+# Python helper scripts (if any)
+############################
+__pycache__/
+*.pyc
+
+############################
+# Generated includes (if used)
+############################
+*.hex
+*.mem
+*.bin
+*.json
