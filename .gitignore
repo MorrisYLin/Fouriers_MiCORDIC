@@ -9,9 +9,6 @@
 *.fst
 *.out
 
-# Our build directory
-build/
-
 ############################
 # Waveform viewer files
 ############################

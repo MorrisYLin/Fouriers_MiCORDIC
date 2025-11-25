@@ -1,0 +1,4 @@
+# Build files kept here, do not version control
+*
+# Except this .gitignore file
+!.gitignore
