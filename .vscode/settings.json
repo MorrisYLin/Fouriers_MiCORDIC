@@ -1,0 +1,34 @@
+{
+    "verilog.linting.linter": "iverilog",
+    "verilog.linting.iverilog.arguments": "-g2012 -Wall -Wimplicit -Wwidth -Winfbranch -Wsensitivity",
+    "verilog.linting.iverilog.runAtFileLocation": false,
+    "verilog.linting.iverilog.includePath": ["./rtl"],
+
+    // Optional: if PATH is weird
+    // "verilog.ctags.path": "C:\\Tools\\ctags\\ctags.exe",
+
+    // Language server (Verible)
+    "verilog.languageServer.veribleVerilogLs.enabled": true,
+    "verilog.languageServer.veribleVerilogLs.path": "verible-verilog-ls",
+    "verilog.languageServer.veribleVerilogLs.arguments": "",
+
+    // Formatter: Verible
+    "editor.defaultFormatter": "mshr-h.veriloghdl",
+    "verilog.formatting.verilogHDL.formatter": "verible-verilog-format",
+    "verilog.formatting.systemVerilog.formatter": "verible-verilog-format",
+    "verilog.formatting.veribleVerilogFormatter.arguments": "--indentation_spaces=4 --tab_width=4 --use_tabs=false",
+
+    // Editor hygiene / file associations – what you already had:
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "editor.formatOnSave": true,
+
+    "files.associations": {
+        "*.v": "verilog",
+        "*.sv": "systemverilog"
+    },
+}

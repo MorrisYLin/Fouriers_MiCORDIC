@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "iverilog: run",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "iverilog -g2012 -s ${input:tbTop} -o build/sim.vvp ${input:tbFile} rtl/*.v ; if ($?) { vvp build/sim.vvp }"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "tbFile",
+            "type": "promptString",
+            "description": "Enter testbench file path (e.g. tb/tb_testmodule.v)",
+            "default": "tb/tb_testmodule.v"
+        },
+        {
+            "id": "tbTop",
+            "type": "promptString",
+            "description": "Enter TESTBENCH top module name (e.g. tb_testmodule)",
+            "default": "tb_testmodule"
+        }
+    ]
+}
