@@ -108,6 +108,9 @@ module tb_butterfly;
         $display("  A = (%.6f, %.6f)", fxp_to_dec(a_re_i), fxp_to_dec(a_im_i));
         $display("  B = (%.6f, %.6f)", fxp_to_dec(b_re_i), fxp_to_dec(b_im_i));
 
+        $display("Rotation:");
+        $display("  B_rot = (%.6f, %.6f)", fxp_to_dec(dut.b_rot_re), fxp_to_dec(dut.b_rot_im));
+
         $display("Outputs:");
         $display("  A' = (%.6f, %.6f)", fxp_to_dec(a_re_o), fxp_to_dec(a_im_o));
         $display("  B' = (%.6f, %.6f)", fxp_to_dec(b_re_o), fxp_to_dec(b_im_o));
