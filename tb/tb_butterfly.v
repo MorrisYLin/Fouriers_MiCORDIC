@@ -9,34 +9,24 @@ module tb_butterfly;
     localparam signed [15:0] TW_RE_Q15 =  16'sd30274;   // ≈ 0.9239
     localparam signed [15:0] TW_IM_Q15 = -16'sd12540;   // ≈ -0.3827
 
-    // DUT ports
-    reg  signed [DATA_WIDTH-1:0] twid_re_i;
-    reg  signed [DATA_WIDTH-1:0] twid_im_i;
-    reg  signed [DATA_WIDTH-1:0] a_re_i;
-    reg  signed [DATA_WIDTH-1:0] a_im_i;
-    reg  signed [DATA_WIDTH-1:0] b_re_i;
-    reg  signed [DATA_WIDTH-1:0] b_im_i;
+    // DUT ports: each complex number is [0] = Re, [1] = Im
+    reg  signed [DATA_WIDTH-1:0] twid_i [0:1];
+    reg  signed [DATA_WIDTH-1:0] a_i    [0:1];
+    reg  signed [DATA_WIDTH-1:0] b_i    [0:1];
 
-    wire signed [DATA_WIDTH-1:0] a_re_o;
-    wire signed [DATA_WIDTH-1:0] a_im_o;
-    wire signed [DATA_WIDTH-1:0] b_re_o;
-    wire signed [DATA_WIDTH-1:0] b_im_o;
+    wire signed [DATA_WIDTH-1:0] a_o    [0:1];
+    wire signed [DATA_WIDTH-1:0] b_o    [0:1];
 
     // Instantiate DUT
     butterfly #(
         .DATA_WIDTH(DATA_WIDTH),
         .FRAC_BITS (FRAC_BITS)
     ) dut (
-        .twid_re_i(twid_re_i),
-        .twid_im_i(twid_im_i),
-        .a_re_i   (a_re_i),
-        .a_im_i   (a_im_i),
-        .b_re_i   (b_re_i),
-        .b_im_i   (b_im_i),
-        .a_re_o   (a_re_o),
-        .a_im_o   (a_im_o),
-        .b_re_o   (b_re_o),
-        .b_im_o   (b_im_o)
+        .twid_i(twid_i),
+        .a_i   (a_i),
+        .b_i   (b_i),
+        .a_o   (a_o),
+        .b_o   (b_o)
     );
 
     // Fixed-point → decimal helper
@@ -48,74 +38,92 @@ module tb_butterfly;
     endfunction
 
     // Q-format constants (Q(FRAC_BITS))
-    localparam signed [DATA_WIDTH-1:0] Q_ONE         = 21'sd1 <<< FRAC_BITS;         // 1.0
-    localparam signed [DATA_WIDTH-1:0] Q_ONE_HALF    = 21'sd1 <<< (FRAC_BITS-1);     // 0.5
-    localparam signed [DATA_WIDTH-1:0] Q_ONE_QUARTER = 21'sd1 <<< (FRAC_BITS-2);     // 0.25
+    localparam signed [DATA_WIDTH-1:0] Q_ONE         = (21'sd1 <<< FRAC_BITS);       // 1.0
+    localparam signed [DATA_WIDTH-1:0] Q_ONE_HALF    = (21'sd1 <<< (FRAC_BITS-1));   // 0.5
+    localparam signed [DATA_WIDTH-1:0] Q_ONE_QUARTER = (21'sd1 <<< (FRAC_BITS-2));   // 0.25
 
     initial begin
         // VCD dump
         $dumpfile("wave.vcd");
         $dumpvars(0, tb_butterfly);
 
-        $display("=== Butterfly testbench start ===");
+        $display("=== Butterfly (array I/O) testbench start ===");
 
+        // ------------------------------------------------
         // Sign-extend Q15 twiddle to 21-bit Q5.15
-        twid_re_i = {{(DATA_WIDTH-16){TW_RE_Q15[15]}}, TW_RE_Q15};
-        twid_im_i = {{(DATA_WIDTH-16){TW_IM_Q15[15]}}, TW_IM_Q15};
+        // twid_i[0] = Re{W}, twid_i[1] = Im{W}
+        // ------------------------------------------------
+        twid_i[0] = {{(DATA_WIDTH-16){TW_RE_Q15[15]}}, TW_RE_Q15};
+        twid_i[1] = {{(DATA_WIDTH-16){TW_IM_Q15[15]}}, TW_IM_Q15};
 
-        // -------------------------------
+        // =================================================
         // Test vector 1
         // A = 0.5 + j0
         // B = 0.25 + j0.25
-        // -------------------------------
-        a_re_i = Q_ONE_HALF;
-        a_im_i = 21'sd0;
-        b_re_i = Q_ONE_HALF;
-        b_im_i = 21'sd0;
+        // =================================================
+        a_i[0] = Q_ONE_HALF;      // Re(A)
+        a_i[1] = 21'sd0;          // Im(A)
+
+        b_i[0] = Q_ONE_QUARTER;   // Re(B)
+        b_i[1] = Q_ONE_QUARTER;   // Im(B)
 
         #1; // allow combinational logic to settle
 
         $display("\n--- Test 1 ---");
         $display("Twiddle W16^1 (decimal): re=%.6f, im=%.6f",
-                 fxp_to_dec({{(DATA_WIDTH-16){TW_RE_Q15[15]}}, TW_RE_Q15}),
-                 fxp_to_dec({{(DATA_WIDTH-16){TW_IM_Q15[15]}}, TW_IM_Q15}));
+                 fxp_to_dec(twid_i[0]),
+                 fxp_to_dec(twid_i[1]));
 
         $display("Inputs:");
-        $display("  A = (%.6f, %.6f)", fxp_to_dec(a_re_i), fxp_to_dec(a_im_i));
-        $display("  B = (%.6f, %.6f)", fxp_to_dec(b_re_i), fxp_to_dec(b_im_i));
+        $display("  A = (%.6f, %.6f)",
+                 fxp_to_dec(a_i[0]), fxp_to_dec(a_i[1]));
+        $display("  B = (%.6f, %.6f)",
+                 fxp_to_dec(b_i[0]), fxp_to_dec(b_i[1]));
 
-        $display("Rotation:");
-        $display("  B_rot = (%.6f, %.6f)", fxp_to_dec(dut.b_rot_re), fxp_to_dec(dut.b_rot_im));
+        // Access internal rotated B via hierarchical reference
+        $display("Rotation (B_rot = B * W):");
+        $display("  B_rot = (%.6f, %.6f)",
+                 fxp_to_dec(dut.b_rot_re),
+                 fxp_to_dec(dut.b_rot_im));
 
         $display("Outputs:");
-        $display("  A' = (%.6f, %.6f)", fxp_to_dec(a_re_o), fxp_to_dec(a_im_o));
-        $display("  B' = (%.6f, %.6f)", fxp_to_dec(b_re_o), fxp_to_dec(b_im_o));
+        $display("  A' = (%.6f, %.6f)",
+                 fxp_to_dec(a_o[0]), fxp_to_dec(a_o[1]));
+        $display("  B' = (%.6f, %.6f)",
+                 fxp_to_dec(b_o[0]), fxp_to_dec(b_o[1]));
 
-        // -------------------------------
+        // =================================================
         // Test vector 2
         // A = 1.0 + j0
-        // B = 0.0 + j0.5
-        // -------------------------------
-        a_re_i = Q_ONE;
-        a_im_i = 21'sd0;
-        b_re_i = 21'sd0;
-        b_im_i = -Q_ONE_HALF;
+        // B = 0.0 - j0.5
+        // =================================================
+        a_i[0] = Q_ONE;           // Re(A)
+        a_i[1] = 21'sd0;          // Im(A)
+
+        b_i[0] = 21'sd0;          // Re(B)
+        b_i[1] = -Q_ONE_HALF;     // Im(B)
 
         #1;
 
         $display("\n--- Test 2 ---");
         $display("Inputs:");
-        $display("  A = (%.6f, %.6f)", fxp_to_dec(a_re_i), fxp_to_dec(a_im_i));
-        $display("  B = (%.6f, %.6f)", fxp_to_dec(b_re_i), fxp_to_dec(b_im_i));
+        $display("  A = (%.6f, %.6f)",
+                 fxp_to_dec(a_i[0]), fxp_to_dec(a_i[1]));
+        $display("  B = (%.6f, %.6f)",
+                 fxp_to_dec(b_i[0]), fxp_to_dec(b_i[1]));
 
-        $display("Rotation:");
-        $display("  B_rot = (%.6f, %.6f)", fxp_to_dec(dut.b_rot_re), fxp_to_dec(dut.b_rot_im));
+        $display("Rotation (B_rot = B * W):");
+        $display("  B_rot = (%.6f, %.6f)",
+                 fxp_to_dec(dut.b_rot_re),
+                 fxp_to_dec(dut.b_rot_im));
 
         $display("Outputs:");
-        $display("  A' = (%.6f, %.6f)", fxp_to_dec(a_re_o), fxp_to_dec(a_im_o));
-        $display("  B' = (%.6f, %.6f)", fxp_to_dec(b_re_o), fxp_to_dec(b_im_o));
+        $display("  A' = (%.6f, %.6f)",
+                 fxp_to_dec(a_o[0]), fxp_to_dec(a_o[1]));
+        $display("  B' = (%.6f, %.6f)",
+                 fxp_to_dec(b_o[0]), fxp_to_dec(b_o[1]));
 
-        $display("\n=== Butterfly testbench end ===");
+        $display("\n=== Butterfly (array I/O) testbench end ===");
         $finish;
     end
 
