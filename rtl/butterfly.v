@@ -37,11 +37,11 @@ module butterfly #(
     cordic_iteration cord (
         .clk(clk_i),
         .rst(0),
-        .x_in(b_re_i),
-        .y_in(b_im_i),
-        .phi(twid_im_i),
-        .x_out(b_rot_re),
-        .y_out(b_rot_im)
+        .x_in(b_re_i[15:0]),
+        .y_in(b_im_i[15:0]),
+        .phi(twid_im_i[15:0]),
+        .x_out(b_rot_re[15:0]),
+        .y_out(b_rot_im[15:0])
     );
 
     assign a_re_o = a_re_i + b_rot_re;
