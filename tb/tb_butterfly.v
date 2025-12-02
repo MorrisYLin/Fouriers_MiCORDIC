@@ -70,8 +70,8 @@ module tb_butterfly;
         // -------------------------------
         a_re_i = Q_ONE_HALF;
         a_im_i = 21'sd0;
-        b_re_i = Q_ONE_QUARTER;
-        b_im_i = Q_ONE_QUARTER;
+        b_re_i = Q_ONE_HALF;
+        b_im_i = 21'sd0;
 
         #1; // allow combinational logic to settle
 
@@ -99,7 +99,7 @@ module tb_butterfly;
         a_re_i = Q_ONE;
         a_im_i = 21'sd0;
         b_re_i = 21'sd0;
-        b_im_i = Q_ONE_HALF;
+        b_im_i = -Q_ONE_HALF;
 
         #1;
 

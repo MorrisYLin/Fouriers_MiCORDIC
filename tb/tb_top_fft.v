@@ -39,14 +39,27 @@ module tb_top_fft;
         $dumpfile("fft.vcd");
         $dumpvars(0, tb_top_fft);
 
-        $display("=== TOP FFT Testbench: DC Offset ===");
+        $display("=== TOP FFT Testbench ===");
 
-        // -------------------------------
-        // Apply DC input: all samples = +0.5
-        // Q1.15: 0.5 = 1 << (15-1) = 2^14
-        // -------------------------------
-        for (int i = 0; i < N; i = i + 1)
-            x_re_i[i] = 16'h2000;   // 0.5 in Q1.15
+        // for (int i = 0; i < N; i = i + 1) begin
+        //     x_re_i[i] = 16'h4000;
+        // end
+
+        x_re_i[0] = 16'h4000; //  +0.5
+        x_re_i[1] = 16'h2D41; //  +0.3536
+        x_re_i[2] = 16'h0000; //   0
+        x_re_i[3] = 16'hD2BF; //  -0.3536
+        x_re_i[4] = 16'hC000; //  -0.5
+        x_re_i[5] = 16'hD2BF; //  -0.3536
+        x_re_i[6] = 16'h0000; //   0
+        x_re_i[7] = 16'h2D41; //  +0.3536
+
+        $display("\nFFT Input (decimal):");
+        for (int i = 0; i < N; i = i + 1) begin
+            $display("  Bin %0d :  Re = %0.6f",
+                     i,
+                     fxp_to_real(x_re_i[i]));
+        end
 
         valid_i = 0;
         @(posedge clk_i);
@@ -67,11 +80,6 @@ module tb_top_fft;
                      fxp_to_real(y_re_o[i]),
                      fxp_to_real(y_im_o[i]));
         end
-
-        // Expected:
-        // Bin 0 ≈ 4.0
-        // Others ≈ 0.0
-        $display("\nExpected ideal result for DC(0.5): Bin0 = 4.0000, others = 0");
 
         $display("\n=== Testbench complete ===");
         $finish;
