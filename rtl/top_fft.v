@@ -44,7 +44,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter0_0 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(TW_RE_0),
         .twid_im_i(TW_IM_0),
         .a_re_i(x_re_signed[0]),
@@ -61,7 +61,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter0_1 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(TW_RE_0),
         .twid_im_i(TW_IM_0),
         .a_re_i(x_re_signed[2]),
@@ -78,7 +78,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter0_2 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(TW_RE_0),
         .twid_im_i(TW_IM_0),
         .a_re_i(x_re_signed[4]),
@@ -95,7 +95,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter0_3 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(TW_RE_0),
         .twid_im_i(TW_IM_0),
         .a_re_i(x_re_signed[6]),
@@ -117,7 +117,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter1_0 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s0_re[0]),
@@ -134,7 +134,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter1_1 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s0_re[1]),
@@ -151,7 +151,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter1_2 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s0_re[4]),
@@ -168,7 +168,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter1_3 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s0_re[5]),
@@ -186,7 +186,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter2_0 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s1_re[0]),
@@ -203,7 +203,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter2_1 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s1_re[1]),
@@ -220,7 +220,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter2_2 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s1_re[2]),
@@ -237,7 +237,7 @@ module top_fft (
         .DATA_WIDTH(21),
         .FRAC_BITS(15)
     ) butter2_3 (
-        // input clk_i,
+        .clk_i(clk_i),
         .twid_re_i(),
         .twid_im_i(),
         .a_re_i(s1_re[3]),
