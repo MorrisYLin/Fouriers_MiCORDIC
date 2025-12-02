@@ -1,0 +1,103 @@
+`timescale 1ns/1ps
+
+module tb_cordic_iteration;
+
+    // -------------------------
+    // DUT Inputs
+    // -------------------------
+    reg clk;
+    reg rst;
+    reg signed [15:0] x_in;
+    reg signed [15:0] y_in;
+    reg signed [15:0] phi;
+
+    // -------------------------
+    // DUT Outputs
+    // -------------------------
+    wire signed [15:0] x_out;
+    wire signed [15:0] y_out;
+
+    // -------------------------
+    // Instantiate DUT
+    // -------------------------
+    cordic_iteration dut (
+        .clk(clk),
+        .rst(rst),
+        .x_in(x_in),
+        .y_in(y_in),
+        .phi(phi),
+        .x_out(x_out),
+        .y_out(y_out)
+    );
+
+    // -------------------------
+    // Clock generation (10 ns period)
+    // -------------------------
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk;
+    end
+
+    // -------------------------
+    // Stimulus
+    // -------------------------
+    initial begin
+    // ================================
+    // CASE 1: (1,0) rotate 30°
+    // ================================
+    rst  = 1;
+    x_in = 16'sh7FFF;   // 1.0
+    y_in = 16'sh0000;   // 0
+    phi  = 16'sh4305;   // 30° in Q1.15
+
+    #20; rst = 0;
+    #150;
+
+
+    // ================================
+    // CASE 2: (1,1) rotate 30°
+    // ================================
+    rst = 1; #10; rst = 0;
+    x_in = 16'sh7FFF;   // 1.0
+    y_in = 16'sh7FFF;   // 1.0
+    phi  = 16'sh4305;   // 30°
+
+    #150;
+
+
+    // ================================
+    // CASE 3: (1,0) rotate 15°
+    // ================================
+    rst = 1; #10; rst = 0;
+    x_in = 16'sh7FFF;
+    y_in = 16'sh0000;
+    phi  = 16'sh2182;   // 15°
+
+    #150;
+
+
+    // ================================
+    // CASE 4: (1,1) rotate 15°
+    // ================================
+    rst = 1; #10; rst = 0;
+    x_in = 16'sh7FFF;
+    y_in = 16'sh7FFF;
+    phi  = 16'sh2182;   // 15°
+
+    #150;
+
+
+    // Done
+    $finish;
+end
+
+    // -------------------------
+    // Output Monitoring
+    // -------------------------
+    initial begin
+        $display(" time | clk rst     x_in      y_in      phi     |   x_out     y_out");
+        $monitor("%4dns |  %b   %b   %h   %h   %h   |   %h   %h",
+                 $time, clk, rst, x_in, y_in, phi, x_out, y_out);
+    end
+
+endmodule
