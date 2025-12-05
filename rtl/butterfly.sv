@@ -3,16 +3,16 @@ module butterfly #(
     parameter FRAC_BITS  = 15
 ) (
     // input clk_i,
-    input  signed [FRAC_BITS:0]    twid_i [2],
-    input  signed [DATA_WIDTH-1:0] a_i    [2],
-    input  signed [DATA_WIDTH-1:0] b_i    [2],
+    input  signed [1:0][FRAC_BITS:0]      twid_i,
+    input  signed [1:0][DATA_WIDTH-1:0]   a_i,
+    input  signed [1:0][DATA_WIDTH-1:0]   b_i,
 
-    output signed [DATA_WIDTH:0]   a_o    [2],
-    output signed [DATA_WIDTH:0]   b_o    [2]
+    output signed [1:0][DATA_WIDTH-1:0]   a_o,
+    output signed [1:0][DATA_WIDTH-1:0]   b_o
 );
     // Expand complex num inputs and rename
-    wire signed [DATA_WIDTH-1:0] tw_re = twid_i[0];
-    wire signed [DATA_WIDTH-1:0] tw_im = twid_i[1];
+    wire signed [FRAC_BITS:0] tw_re = twid_i[0];
+    wire signed [FRAC_BITS:0] tw_im = twid_i[1];
 
     wire signed [DATA_WIDTH-1:0] a_re  = a_i[0];
     wire signed [DATA_WIDTH-1:0] a_im  = a_i[1];
@@ -35,10 +35,20 @@ module butterfly #(
     wire signed [DATA_WIDTH-1:0] b_rot_im = rot_im_full >>> FRAC_BITS;
     // End complex multiply
 
-    assign a_o[0] = a_re + b_rot_re;
-    assign a_o[1] = a_im + b_rot_im;
+    wire signed [1:0][DATA_WIDTH:0] a_sum;
+    wire signed [1:0][DATA_WIDTH:0] b_sum;
 
-    assign b_o[0] = a_re - b_rot_re;
-    assign b_o[1] = a_im - b_rot_im;
+    // Applying per-stage right-shift
+    assign a_sum[0] = a_re + b_rot_re;
+    assign a_sum[1] = a_im + b_rot_im;
+
+    assign b_sum[0] = b_re - b_rot_re;
+    assign b_sum[1] = b_im - b_rot_im;
+
+    assign a_o[0] = a_sum[0] [DATA_WIDTH:1];
+    assign a_o[1] = a_sum[1] [DATA_WIDTH:1];
+
+    assign b_o[0] = b_sum[0] [DATA_WIDTH:1];
+    assign b_o[1] = b_sum[1] [DATA_WIDTH:1];
 
 endmodule
