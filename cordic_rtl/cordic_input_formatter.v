@@ -2,14 +2,16 @@
 // theta_in is unsigned 16-bit in [0 .. 32767] representing [0 .. 2*pi)
 // x_in, y_in are signed Q1.15 (16-bit)
 
-module cordic_input_standardizer (
-    input  signed [15:0] x_in,       // Q1.15 signed
-    input  signed [15:0] y_in,       // Q1.15 signed
-    input        [15:0] theta_in,    // unsigned: 0 .. 32767 -> 0 .. 2*pi (FULL_TURN)
-    output signed [15:0] x_out,      // Q1.15 signed
-    output signed [15:0] y_out,      // Q1.15 signed
-    output       [15:0] theta_out,   // unsigned in [0 .. PI/2) (0 .. 8191)
-    output reg   [1:0]  quadrant     // 0..3
+module cordic_input_standardizer #(
+    parameter FRAC_BITS = 15
+    ) (
+    input  signed [FRAC_BITS:0] x_in,       // Q1.15 signed
+    input  signed [FRAC_BITS:0] y_in,       // Q1.15 signed
+    input         [FRAC_BITS:0] theta_in,    // unsigned: 0 .. 32767 -> 0 .. 2*pi (FULL_TURN)
+    output signed [FRAC_BITS:0] x_out,      // Q1.15 signed
+    output signed [FRAC_BITS:0] y_out,      // Q1.15 signed
+    output        [FRAC_BITS:0] theta_out,   // unsigned in [0 .. PI/2) (0 .. 8191)
+    output reg    [1:0]  quadrant     // 0..3
 );
 
     // full-turn constant and quadrant thresholds
@@ -20,12 +22,12 @@ module cordic_input_standardizer (
 
     // angle is already unsigned in [0..FULL_TURN-1], but guard against FULL_TURN input
     // Treat theta_in == FULL_TURN as 0 (wrap).
-    wire [15:0] angle_norm = (theta_in == FULL_TURN) ? 16'd0 : theta_in;
+    wire [FRAC_BITS:0] angle_norm = (theta_in == FULL_TURN) ? 16'd0 : theta_in;
 
     // quadrant detection
     reg [1:0] q;
-    reg [15:0] rem_angle;
-    reg signed [15:0] x_pr, y_pr;
+    reg [FRAC_BITS:0] rem_angle;
+    reg signed [FRAC_BITS:0] x_pr, y_pr;
 
     always @(*) begin
         // quadrant detection

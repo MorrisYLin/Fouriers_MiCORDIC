@@ -3,7 +3,7 @@ module butterfly #(
     parameter FRAC_BITS  = 15
 ) (
     // input clk_i,
-    input  signed [DATA_WIDTH-1:0] twid_i [2],
+    input  signed [FRAC_BITS:0]    twid_i [2],
     input  signed [DATA_WIDTH-1:0] a_i    [2],
     input  signed [DATA_WIDTH-1:0] b_i    [2],
 
