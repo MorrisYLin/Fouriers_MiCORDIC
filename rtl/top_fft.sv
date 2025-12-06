@@ -5,7 +5,7 @@ module top_fft #(
 ) (
     // input clk_i,
     input  signed [POINT_FFT][2][FRAC_BITS:0] data_i,
-    output signed [POINT_FFT][2][FRAC_BITS+POINT_FFT_POW2:0] data_o
+    output signed [POINT_FFT][2][FRAC_BITS:0] data_o
 );
     // FFT is Radix-2, DIT
     // Means input samples in normal sample order, outputs in bit-reversed order
@@ -62,10 +62,10 @@ module top_fft #(
             for (genvar j = 0; j < 1; j = j + 1) begin
                 butterfly b1 (
                     .twid_i(TW16[4 * j]),
-                    .a_i(s0_out[4 * i + 0 + j]),
-                    .b_i(s0_out[4 * i + 2 + j]),
-                    .a_o(s1_out[4 * i + 0 + j]),
-                    .b_o(s1_out[4 * i + 2 + j])
+                    .a_i(s0_out[4 * i + j]),
+                    .b_i(s0_out[4 * i + j + 2]),
+                    .a_o(s1_out[4 * i + j]),
+                    .b_o(s1_out[4 * i + j + 2])
                 );
             end
         end
