@@ -4,8 +4,8 @@ module top_fft #(
     parameter POINT_FFT = 1 << POINT_FFT_POW2
 ) (
     // input clk_i,
-    input  signed [POINT_FFT][2][FRAC_BITS:0] data_i,
-    output signed [POINT_FFT][2][FRAC_BITS:0] data_o
+    input  signed [2][FRAC_BITS:0] data_i [POINT_FFT],
+    output signed [2][FRAC_BITS:0] data_o [POINT_FFT]
 );
     // FFT is Radix-2, DIT
     // Means input samples in normal sample order, outputs in bit-reversed order
@@ -13,7 +13,7 @@ module top_fft #(
     // Twiddle factors
     // Twiddle factors for 16-point FFT, Q1.15, e^{-j 2πk/16}
     // TW16[k][0] = Re{W16^k}, TW16[k][1] = Im{W16^k}
-    wire signed [8][2][FRAC_BITS:0] TW16;
+    wire signed [2][FRAC_BITS:0] TW16 [8];
 
     assign TW16[0][0] =  32767;  // W16^0  Re ≈  1.0000
     assign TW16[0][1] =      0;  //         Im ≈  0.0000
@@ -40,7 +40,7 @@ module top_fft #(
     assign TW16[7][1] = -12540;  //         Im ≈ -0.3827
 
     // Stage 0
-    wire signed [POINT_FFT][2][FRAC_BITS:0] s0_out;
+    wire signed [2][FRAC_BITS:0] s0_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin
@@ -55,7 +55,7 @@ module top_fft #(
     endgenerate
 
     // Stage 1
-    wire signed [POINT_FFT][2][FRAC_BITS:0] s1_out;
+    wire signed [2][FRAC_BITS:0] s1_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 4; i = i + 1) begin
@@ -72,7 +72,7 @@ module top_fft #(
     endgenerate
 
     // Stage 2
-    wire signed [POINT_FFT][2][FRAC_BITS:0] s2_out;
+    wire signed [2][FRAC_BITS:0] s2_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 1; i = i + 1) begin
@@ -89,7 +89,7 @@ module top_fft #(
     endgenerate
 
     // Stage 3
-    wire signed [POINT_FFT][2][FRAC_BITS:0] s3_out;
+    wire signed [2][FRAC_BITS:0] s3_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin

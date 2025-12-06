@@ -12,33 +12,28 @@ module tb_top_fft;
     // 1) Unpacked "nice" view for the testbench
     //    tb_in[n][0] = Re{x[n]}, tb_in[n][1] = Im{x[n]}
     //    tb_out[k][0] = Re{X[k]}, tb_out[k][1] = Im{X[k]}
+    //    Each tb_in[n] / tb_out[k] is a packed [1:0][FRAC_BITS:0]
     // ============================================================
 
-    logic signed [FRAC_BITS:0]      tb_in  [0:POINT_FFT-1][0:1];
-    wire  signed [FRAC_BITS:0]      tb_out [0:POINT_FFT-1][0:1];
+    logic signed [1:0][FRAC_BITS:0] tb_in  [0:POINT_FFT-1];
+    wire  signed [1:0][FRAC_BITS:0] tb_out [0:POINT_FFT-1];
 
     // ============================================================
     // 2) Packed view to match DUT ports
     //    data_i[n][0/1][bits], data_o[n][0/1][bits]
     // ============================================================
 
-    wire signed [POINT_FFT-1:0][1:0][FRAC_BITS:0] data_i;
-    wire signed [POINT_FFT-1:0][1:0][FRAC_BITS:0] data_o;
+    wire signed [1:0][FRAC_BITS:0] data_i [POINT_FFT-1:0];
+    wire signed [1:0][FRAC_BITS:0] data_o [POINT_FFT-1:0];
 
-    genvar gi, gc;
+    genvar gi;
     generate
-        // Drive packed input from unpacked tb_in
-        for (gi = 0; gi < POINT_FFT; gi++) begin : G_IN
-            for (gc = 0; gc < 2; gc++) begin : G_IN_C
-                assign data_i[gi][gc] = tb_in[gi][gc];
-            end
-        end
-
-        // Unpack DUT outputs into tb_out
-        for (gi = 0; gi < POINT_FFT; gi++) begin : G_OUT
-            for (gc = 0; gc < 2; gc++) begin : G_OUT_C
-                assign tb_out[gi][gc] = data_o[gi][gc];
-            end
+        // Drive packed DUT input from tb_in
+        for (gi = 0; gi < POINT_FFT; gi++) begin : G_IN_OUT
+            // data_i[gi] is a packed [1:0][FRAC_BITS:0]
+            // tb_in[gi] is also a packed [1:0][FRAC_BITS:0]
+            assign data_i[gi]   = tb_in[gi];
+            assign tb_out[gi]   = data_o[gi];
         end
     endgenerate
 
@@ -75,8 +70,8 @@ module tb_top_fft;
         begin
             $display("\n==== Time-domain input: %s ====", label);
             for (n = 0; n < POINT_FFT; n++) begin
-                re_v = fxp_to_real(tb_in[n][0]);
-                im_v = fxp_to_real(tb_in[n][1]);
+                re_v = fxp_to_real(tb_in[n][0]);  // Re
+                im_v = fxp_to_real(tb_in[n][1]);  // Im
                 $display("n %2d : Re = %f  Im = %f", n, re_v, im_v);
             end
         end
@@ -88,8 +83,8 @@ module tb_top_fft;
         begin
             $display("\n==== Frequency-domain output: %s ====", label);
             for (k = 0; k < POINT_FFT; k++) begin
-                re_v = fxp_to_real(tb_out[k][0]);
-                im_v = fxp_to_real(tb_out[k][1]);
+                re_v = fxp_to_real(tb_out[k][0]); // Re
+                im_v = fxp_to_real(tb_out[k][1]); // Im
                 $display("k %2d : Re = %f  Im = %f", k, re_v, im_v);
             end
         end

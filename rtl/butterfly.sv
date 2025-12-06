@@ -3,12 +3,12 @@ module butterfly #(
     parameter FRAC_BITS  = 15
 ) (
     // input clk_i,
-    input  signed [1:0][FRAC_BITS:0]      twid_i,
-    input  signed [1:0][DATA_WIDTH-1:0]   a_i,
-    input  signed [1:0][DATA_WIDTH-1:0]   b_i,
+    input  signed [2][FRAC_BITS:0]      twid_i,
+    input  signed [2][DATA_WIDTH-1:0]   a_i,
+    input  signed [2][DATA_WIDTH-1:0]   b_i,
 
-    output signed [1:0][DATA_WIDTH-1:0]   a_o,
-    output signed [1:0][DATA_WIDTH-1:0]   b_o
+    output signed [2][DATA_WIDTH-1:0]   a_o,
+    output signed [2][DATA_WIDTH-1:0]   b_o
 );
     // Expand complex num inputs and rename
     wire signed [FRAC_BITS:0] tw_re = twid_i[0];
