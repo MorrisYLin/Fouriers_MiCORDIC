@@ -5,6 +5,10 @@ module testmodule (
     output reg [1:0] c_o
 );
 
+    wire [2:0] test;
+
+    assign test[0] = 0;
+
     reg [1:0] state;
 
     always @(posedge clk_i) begin

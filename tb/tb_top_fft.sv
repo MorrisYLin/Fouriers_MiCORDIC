@@ -15,16 +15,16 @@ module tb_top_fft;
     //    Each tb_in[n] / tb_out[k] is a packed [1:0][FRAC_BITS:0]
     // ============================================================
 
-    logic signed [1:0][FRAC_BITS:0] tb_in  [0:POINT_FFT-1];
-    wire  signed [1:0][FRAC_BITS:0] tb_out [0:POINT_FFT-1];
+    logic signed [2][FRAC_BITS:0] tb_in  [POINT_FFT];
+    wire  signed [2][FRAC_BITS:0] tb_out [POINT_FFT];
 
     // ============================================================
     // 2) Packed view to match DUT ports
     //    data_i[n][0/1][bits], data_o[n][0/1][bits]
     // ============================================================
 
-    wire signed [1:0][FRAC_BITS:0] data_i [POINT_FFT-1:0];
-    wire signed [1:0][FRAC_BITS:0] data_o [POINT_FFT-1:0];
+    wire signed [2][FRAC_BITS:0] data_i [POINT_FFT];
+    wire signed [2][FRAC_BITS:0] data_o [POINT_FFT];
 
     genvar gi;
     generate
@@ -130,9 +130,41 @@ module tb_top_fft;
     // ============================================================
 
     initial begin
-        // VCD dump
+        integer n;
+
+        // ---------------------------------
+        // VCD file
+        // ---------------------------------
         $dumpfile("wave.vcd");
+
+        // Dump scalars / “normal” stuff under tb_top_fft
         $dumpvars(0, tb_top_fft);
+
+        // Explicitly dump ALL complex arrays in the TB
+        for (n = 0; n < POINT_FFT; n = n + 1) begin
+            // Testbench "nice" view
+            $dumpvars(0, tb_top_fft.tb_in[n]);
+            $dumpvars(0, tb_top_fft.tb_out[n]);
+
+            // Packed DUT port view
+            $dumpvars(0, tb_top_fft.data_i[n]);
+            $dumpvars(0, tb_top_fft.data_o[n]);
+
+            // DUT internal stages (hierarchical)
+            $dumpvars(0, tb_top_fft.dut.s0_out[n]);
+            $dumpvars(0, tb_top_fft.dut.s1_out[n]);
+            $dumpvars(0, tb_top_fft.dut.s2_out[n]);
+            $dumpvars(0, tb_top_fft.dut.s3_out[n]);
+        end
+
+        // TW16 only has 8 entries
+        for (n = 0; n < 8; n = n + 1) begin
+            $dumpvars(0, tb_top_fft.dut.TW16[n]);
+        end
+
+        // ---------------------------------
+        // Actual tests
+        // ---------------------------------
 
         // ---- Test 1: DC offset ----
         apply_dc(0.5);          // x[n] = 0.5
