@@ -2,44 +2,25 @@
 
 module tb_top_fft;
 
-    // Match DUT parameters
     localparam int POINT_FFT_POW2 = 4;
     localparam int POINT_FFT      = 1 << POINT_FFT_POW2;   // 16
     localparam int FRAC_BITS      = 15;
-    localparam int DATA_W         = FRAC_BITS + 1;         // [FRAC_BITS:0]
 
-    // ============================================================
-    // 1) Unpacked "nice" view for the testbench
-    //    tb_in[n][0] = Re{x[n]}, tb_in[n][1] = Im{x[n]}
-    //    tb_out[k][0] = Re{X[k]}, tb_out[k][1] = Im{X[k]}
-    //    Each tb_in[n] / tb_out[k] is a packed [1:0][FRAC_BITS:0]
-    // ============================================================
+    // tb_in[n][0]=Re, tb_in[n][1]=Im (Q1.FFRAC_BITS)
+    logic signed [1:0][FRAC_BITS:0] tb_in  [POINT_FFT];
+    wire  signed [1:0][FRAC_BITS:0] tb_out [POINT_FFT];    // alias to DUT outputs (if/when used)
 
-    logic signed [2][FRAC_BITS:0] tb_in  [POINT_FFT];
-    wire  signed [2][FRAC_BITS:0] tb_out [POINT_FFT];
-
-    // ============================================================
-    // 2) Packed view to match DUT ports
-    //    data_i[n][0/1][bits], data_o[n][0/1][bits]
-    // ============================================================
-
-    wire signed [2][FRAC_BITS:0] data_i [POINT_FFT];
-    wire signed [2][FRAC_BITS:0] data_o [POINT_FFT];
+    // DUT ports
+    wire signed [1:0][FRAC_BITS:0] data_i [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] data_o [POINT_FFT];
 
     genvar gi;
     generate
-        // Drive packed DUT input from tb_in
         for (gi = 0; gi < POINT_FFT; gi++) begin : G_IN_OUT
-            // data_i[gi] is a packed [1:0][FRAC_BITS:0]
-            // tb_in[gi] is also a packed [1:0][FRAC_BITS:0]
-            assign data_i[gi]   = tb_in[gi];
-            assign tb_out[gi]   = data_o[gi];
+            assign data_i[gi] = tb_in[gi];
+            assign tb_out[gi] = data_o[gi];
         end
     endgenerate
-
-    // ============================================================
-    // 3) DUT instantiation
-    // ============================================================
 
     top_fft #(
         .POINT_FFT_POW2(POINT_FFT_POW2),
@@ -49,10 +30,16 @@ module tb_top_fft;
         .data_o(data_o)
     );
 
-    // ============================================================
-    // 4) Fixed-point helpers (same scale for in/out)
-    // ============================================================
+    // Alias final FFT stage (s3_out) for printing
+    wire signed [1:0][FRAC_BITS:0] fft_final [POINT_FFT];
+    genvar gj;
+    generate
+        for (gj = 0; gj < POINT_FFT; gj++) begin : G_ALIAS
+            assign fft_final[gj] = dut.s3_out[gj];
+        end
+    endgenerate
 
+    // Fixed-point to real helper (Q1.FRAC_BITS)
     function real fxp_to_real;
         input signed [FRAC_BITS:0] val;
         begin
@@ -60,18 +47,14 @@ module tb_top_fft;
         end
     endfunction
 
-    // ============================================================
-    // 5) Printing helpers
-    // ============================================================
-
     task print_time_domain(input string label);
         int n;
         real re_v, im_v;
         begin
             $display("\n==== Time-domain input: %s ====", label);
             for (n = 0; n < POINT_FFT; n++) begin
-                re_v = fxp_to_real(tb_in[n][0]);  // Re
-                im_v = fxp_to_real(tb_in[n][1]);  // Im
+                re_v = fxp_to_real(tb_in[n][0]);
+                im_v = fxp_to_real(tb_in[n][1]);
                 $display("n %2d : Re = %f  Im = %f", n, re_v, im_v);
             end
         end
@@ -81,35 +64,29 @@ module tb_top_fft;
         int k;
         real re_v, im_v;
         begin
-            $display("\n==== Frequency-domain output: %s ====", label);
+            $display("\n==== Frequency-domain output (from s3_out): %s ====", label);
             for (k = 0; k < POINT_FFT; k++) begin
-                re_v = fxp_to_real(tb_out[k][0]); // Re
-                im_v = fxp_to_real(tb_out[k][1]); // Im
+                re_v = fxp_to_real(fft_final[k][0]);
+                im_v = fxp_to_real(fft_final[k][1]);
                 $display("k %2d : Re = %f  Im = %f", k, re_v, im_v);
             end
         end
     endtask
 
-    // ============================================================
-    // 6) Stimulus: DC offset
-    // ============================================================
-
+    // x[n] = dc (real)
     task apply_dc(input real dc);
         int n;
         int signed sample_fx;
         begin
             sample_fx = $rtoi(dc * (1 << FRAC_BITS));
             for (n = 0; n < POINT_FFT; n++) begin
-                tb_in[n][0] = sample_fx; // real
-                tb_in[n][1] = '0;        // imag
+                tb_in[n][0] = sample_fx;
+                tb_in[n][1] = '0;
             end
         end
     endtask
 
-    // ============================================================
-    // 7) Stimulus: real cosine tone at bin k0
-    // ============================================================
-
+    // x[n] = amp * cos(2π k0 n / N)
     task apply_tone(input int k0, input real amp);
         int  n;
         real angle, x;
@@ -119,61 +96,24 @@ module tb_top_fft;
                 angle = 2.0 * 3.14159265358979323846 * k0 * n / POINT_FFT;
                 x     = amp * $cos(angle);
                 sample_fx = $rtoi(x * (1 << FRAC_BITS));
-                tb_in[n][0] = sample_fx; // real
-                tb_in[n][1] = '0;        // imag
+                tb_in[n][0] = sample_fx;
+                tb_in[n][1] = '0;
             end
         end
     endtask
 
-    // ============================================================
-    // 8) Test sequence + VCD dump
-    // ============================================================
-
     initial begin
-        integer n;
-
-        // ---------------------------------
-        // VCD file
-        // ---------------------------------
         $dumpfile("wave.vcd");
-
-        // Dump scalars / “normal” stuff under tb_top_fft
         $dumpvars(0, tb_top_fft);
 
-        // Explicitly dump ALL complex arrays in the TB
-        for (n = 0; n < POINT_FFT; n = n + 1) begin
-            // Testbench "nice" view
-            $dumpvars(0, tb_top_fft.tb_in[n]);
-            $dumpvars(0, tb_top_fft.tb_out[n]);
-
-            // Packed DUT port view
-            $dumpvars(0, tb_top_fft.data_i[n]);
-            $dumpvars(0, tb_top_fft.data_o[n]);
-
-            // DUT internal stages (hierarchical)
-            $dumpvars(0, tb_top_fft.dut.s0_out[n]);
-            $dumpvars(0, tb_top_fft.dut.s1_out[n]);
-            $dumpvars(0, tb_top_fft.dut.s2_out[n]);
-            $dumpvars(0, tb_top_fft.dut.s3_out[n]);
-        end
-
-        // TW16 only has 8 entries
-        for (n = 0; n < 8; n = n + 1) begin
-            $dumpvars(0, tb_top_fft.dut.TW16[n]);
-        end
-
-        // ---------------------------------
-        // Actual tests
-        // ---------------------------------
-
-        // ---- Test 1: DC offset ----
-        apply_dc(0.5);          // x[n] = 0.5
-        #1;                     // allow combinational FFT to settle
+        // Test 1: DC offset
+        apply_dc(0.5);
+        #1;
         print_time_domain("DC offset (0.5)");
         print_freq_domain("DC offset (0.5)");
 
-        // ---- Test 2: single-tone cosine ----
-        apply_tone(3, 0.5);     // bin 3, amplitude 0.5
+        // Test 2: single-tone cosine at bin 3
+        apply_tone(3, 0.5);
         #1;
         print_time_domain("Cosine tone, bin 3, amp 0.5");
         print_freq_domain("Cosine tone, bin 3, amp 0.5");

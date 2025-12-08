@@ -1,5 +1,6 @@
 module top_fft #(
     parameter POINT_FFT_POW2 = 4,
+    parameter DATA_WIDTH = 16,
     parameter FRAC_BITS = 15,
     parameter POINT_FFT = 1 << POINT_FFT_POW2
 ) (
@@ -7,37 +8,33 @@ module top_fft #(
     input  signed [1:0][FRAC_BITS:0] data_i [POINT_FFT],
     output signed [1:0][FRAC_BITS:0] data_o [POINT_FFT]
 );
-    // FFT is Radix-2, DIT
-    // Means input samples in normal sample order, outputs in bit-reversed order
+    // FFT is Radix-2
 
-    // Twiddle factors
-    // Twiddle factors for 16-point FFT, Q1.15, e^{-j 2πk/16}
-    // TW16[k][0] = Re{W16^k}, TW16[k][1] = Im{W16^k}
-    wire signed [1:0][FRAC_BITS:0] TW16 [8];
+    wire signed [1:0][FRAC_BITS+1:0] TW16 [8];
+    //    k   Re{W16^k}             Im{W16^k}
+    assign TW16[0][0] =  32768;  //  1.0000  →  1.0 * 2^15
+    assign TW16[0][1] =      0;  //  0.0000
 
-    assign TW16[0] [0] =  32767;  // W16^0  Re ≈  1.0000
-    assign TW16[0] [1] =      0;  //         Im ≈  0.0000
+    assign TW16[1][0] =  30274;  //  0.9239  →  round(0.9239 * 2^15)
+    assign TW16[1][1] = -12540;  // -0.3827
 
-    assign TW16[1] [0] =  30274;  // W16^1  Re ≈  0.9239
-    assign TW16[1] [1] = -12540;  //         Im ≈ -0.3827
+    assign TW16[2][0] =  23170;  //  0.7071
+    assign TW16[2][1] = -23170;  // -0.7071
 
-    assign TW16[2] [0] =  23170;  // W16^2  Re ≈  0.7071
-    assign TW16[2] [1] = -23170;  //         Im ≈ -0.7071
+    assign TW16[3][0] =  12540;  //  0.3827
+    assign TW16[3][1] = -30274;  // -0.9239
 
-    assign TW16[3] [0] =  12540;  // W16^3  Re ≈  0.3827
-    assign TW16[3] [1] = -30274;  //         Im ≈ -0.9239
+    assign TW16[4][0] =      0;  //  0.0000
+    assign TW16[4][1] = -32768;  // -1.0000
 
-    assign TW16[4] [0] =      0;  // W16^4  Re ≈  0.0000
-    assign TW16[4] [1] = -32768;  //         Im ≈ -1.0000
+    assign TW16[5][0] = -12540;  // -0.3827
+    assign TW16[5][1] = -30274;  // -0.9239
 
-    assign TW16[5] [0] = -12540;  // W16^5  Re ≈ -0.3827
-    assign TW16[5] [1] = -30274;  //         Im ≈ -0.9239
+    assign TW16[6][0] = -23170;  // -0.7071
+    assign TW16[6][1] = -23170;  // -0.7071
 
-    assign TW16[6] [0] = -23170;  // W16^6  Re ≈ -0.7071
-    assign TW16[6] [1] = -23170;  //         Im ≈ -0.7071
-
-    assign TW16[7] [0] = -30274;  // W16^7  Re ≈ -0.9239
-    assign TW16[7] [1] = -12540;  //         Im ≈ -0.3827
+    assign TW16[7][0] = -30274;  // -0.9239
+    assign TW16[7][1] = -12540;  // -0.3827
 
     // Stage 0
     wire signed [2][FRAC_BITS:0] s0_out [POINT_FFT];
@@ -79,9 +76,9 @@ module top_fft #(
             for (genvar j = 0; j < 4; j = j + 1) begin
                 butterfly b2 (
                     .twid_i(TW16[2 * j]),
-                    .a_i(s1_out[8 * i + 0 + j]),
+                    .a_i(s1_out[8 * i + j]),
                     .b_i(s1_out[8 * i + 4 + j]),
-                    .a_o(s2_out[8 * i + 0 + j]),
+                    .a_o(s2_out[8 * i + j]),
                     .b_o(s2_out[8 * i + 4 + j])
                 );
             end
@@ -104,5 +101,6 @@ module top_fft #(
     endgenerate
 
     // Bit-reversed output
+    assign data_o = s3_out;
 
 endmodule

@@ -3,7 +3,7 @@ module butterfly #(
     parameter FRAC_BITS  = 15
 ) (
     // input clk_i,
-    input  signed [1:0][FRAC_BITS:0]      twid_i,
+    input  signed [1:0][FRAC_BITS+1:0]    twid_i,
     input  signed [1:0][DATA_WIDTH-1:0]   a_i,
     input  signed [1:0][DATA_WIDTH-1:0]   b_i,
 
@@ -32,8 +32,8 @@ module butterfly #(
     assign a_sum[0] = a_i[0] + b_rot_re;
     assign a_sum[1] = a_i[1] + b_rot_im;
 
-    assign b_sum[0] = b_i[0] - b_rot_re;
-    assign b_sum[1] = b_i[1] - b_rot_im;
+    assign b_sum[0] = a_i[0] - b_rot_re;
+    assign b_sum[1] = a_i[1] - b_rot_im;
 
     assign a_o[0] = a_sum[0] [DATA_WIDTH:1];
     assign a_o[1] = a_sum[1] [DATA_WIDTH:1];
