@@ -1,4 +1,4 @@
-module butterfly #(
+module butterfly_cordic #(
     parameter DATA_WIDTH = 16,
     parameter FRAC_BITS  = 15
 ) (

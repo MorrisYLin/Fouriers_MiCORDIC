@@ -1,4 +1,4 @@
-module top_fft #(
+module top_fft_cordic #(
     parameter POINT_FFT_POW2 = 4,
     parameter DATA_WIDTH = 16,
     parameter FRAC_BITS = 15,

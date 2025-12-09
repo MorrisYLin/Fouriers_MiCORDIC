@@ -1,0 +1,125 @@
+module top_fft_comb #(
+    parameter POINT_FFT_POW2 = 4,
+    parameter DATA_WIDTH = 16,
+    parameter FRAC_BITS = 15,
+    parameter POINT_FFT = 1 << POINT_FFT_POW2
+) (
+    // input clk_i,
+    input  signed [1:0][FRAC_BITS:0] data_i [POINT_FFT],
+    output signed [1:0][FRAC_BITS:0] data_o [POINT_FFT]
+);
+    // Twiddle factor instantiation
+    wire signed [1:0][FRAC_BITS+1:0] TW16 [8];
+    //    k   Re{W16^k}             Im{W16^k}
+    assign TW16[0][0] =  32768;  //  1.0000  →  1.0 * 2^15
+    assign TW16[0][1] =      0;  //  0.0000
+
+    assign TW16[1][0] =  30274;  //  0.9239  →  round(0.9239 * 2^15)
+    assign TW16[1][1] = -12540;  // -0.3827
+
+    assign TW16[2][0] =  23170;  //  0.7071
+    assign TW16[2][1] = -23170;  // -0.7071
+
+    assign TW16[3][0] =  12540;  //  0.3827
+    assign TW16[3][1] = -30274;  // -0.9239
+
+    assign TW16[4][0] =      0;  //  0.0000
+    assign TW16[4][1] = -32768;  // -1.0000
+
+    assign TW16[5][0] = -12540;  // -0.3827
+    assign TW16[5][1] = -30274;  // -0.9239
+
+    assign TW16[6][0] = -23170;  // -0.7071
+    assign TW16[6][1] = -23170;  // -0.7071
+
+    assign TW16[7][0] = -30274;  // -0.9239
+    assign TW16[7][1] = -12540;  // -0.3827
+
+    // Bit-reverse input data
+    wire signed [2][FRAC_BITS:0] s0_in [POINT_FFT];
+
+    assign s0_in[ 0] = data_i[ 0];  // 0000 -> 0000
+    assign s0_in[ 1] = data_i[ 8];  // 0001 -> 1000
+    assign s0_in[ 2] = data_i[ 4];  // 0010 -> 0100
+    assign s0_in[ 3] = data_i[12];  // 0011 -> 1100
+    assign s0_in[ 4] = data_i[ 2];  // 0100 -> 0010
+    assign s0_in[ 5] = data_i[10];  // 0101 -> 1010
+    assign s0_in[ 6] = data_i[ 6];  // 0110 -> 0110
+    assign s0_in[ 7] = data_i[14];  // 0111 -> 1110
+    assign s0_in[ 8] = data_i[ 1];  // 1000 -> 0001
+    assign s0_in[ 9] = data_i[ 9];  // 1001 -> 1001
+    assign s0_in[10] = data_i[ 5];  // 1010 -> 0101
+    assign s0_in[11] = data_i[13];  // 1011 -> 1101
+    assign s0_in[12] = data_i[ 3];  // 1100 -> 0011
+    assign s0_in[13] = data_i[11];  // 1101 -> 1011
+    assign s0_in[14] = data_i[ 7];  // 1110 -> 0111
+    assign s0_in[15] = data_i[15];  // 1111 -> 1111
+
+    // Stage 0
+    wire signed [2][FRAC_BITS:0] s0_out [POINT_FFT];
+
+    generate
+        for (genvar i = 0; i < 8; i = i + 1) begin
+            butterfly_comb b0 (
+                .twid_i(TW16[0]),
+                .a_i(s0_in[2 * i]),
+                .b_i(s0_in[2 * i + 1]),
+                .a_o(s0_out[2 * i]),
+                .b_o(s0_out[2 * i + 1])
+            );
+        end
+    endgenerate
+
+    // Stage 1
+    wire signed [2][FRAC_BITS:0] s1_out [POINT_FFT];
+
+    generate
+        for (genvar i = 0; i < 4; i = i + 1) begin
+            for (genvar j = 0; j < 2; j = j + 1) begin
+                butterfly_comb b1 (
+                    .twid_i(TW16[4 * j]),
+                    .a_i(s0_out[4 * i + j]),
+                    .b_i(s0_out[4 * i + j + 2]),
+                    .a_o(s1_out[4 * i + j]),
+                    .b_o(s1_out[4 * i + j + 2])
+                );
+            end
+        end
+    endgenerate
+
+    // Stage 2
+    wire signed [2][FRAC_BITS:0] s2_out [POINT_FFT];
+
+    generate
+        for (genvar i = 0; i < 2; i = i + 1) begin
+            for (genvar j = 0; j < 4; j = j + 1) begin
+                butterfly_comb b2 (
+                    .twid_i(TW16[2 * j]),
+                    .a_i(s1_out[8 * i + j]),
+                    .b_i(s1_out[8 * i + 4 + j]),
+                    .a_o(s2_out[8 * i + j]),
+                    .b_o(s2_out[8 * i + 4 + j])
+                );
+            end
+        end
+    endgenerate
+
+    // Stage 3
+    wire signed [2][FRAC_BITS:0] s3_out [POINT_FFT];
+
+    generate
+        for (genvar i = 0; i < 8; i = i + 1) begin
+            butterfly_comb b3 (
+                .twid_i(TW16[i]),
+                .a_i(s2_out[i]),
+                .b_i(s2_out[i + 8]),
+                .a_o(s3_out[i]),
+                .b_o(s3_out[i + 8])
+            );
+        end
+    endgenerate
+
+    // Final stage output assignment
+    assign data_o = s3_out;
+
+endmodule

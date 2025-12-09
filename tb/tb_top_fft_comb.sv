@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module tb_top_fft;
+module tb_top_fft_comb;
 
     localparam int POINT_FFT_POW2 = 4;
     localparam int POINT_FFT      = 1 << POINT_FFT_POW2;   // 16
@@ -22,7 +22,7 @@ module tb_top_fft;
         end
     endgenerate
 
-    top_fft #(
+    top_fft_comb #(
         .POINT_FFT_POW2(POINT_FFT_POW2),
         .FRAC_BITS     (FRAC_BITS)
     ) dut (
@@ -104,7 +104,7 @@ module tb_top_fft;
 
     initial begin
         $dumpfile("wave.vcd");
-        $dumpvars(0, tb_top_fft);
+        $dumpvars(0, tb_top_fft_comb);
 
         // Test 1: DC offset
         apply_dc(0.5);
