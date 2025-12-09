@@ -35,7 +35,7 @@ module tb_top_fft;
     genvar gj;
     generate
         for (gj = 0; gj < POINT_FFT; gj++) begin : G_ALIAS
-            assign fft_final[gj] = dut.s3_out[gj];
+            assign fft_final[gj] = data_o[gj];
         end
     endgenerate
 

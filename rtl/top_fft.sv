@@ -8,8 +8,7 @@ module top_fft #(
     input  signed [1:0][FRAC_BITS:0] data_i [POINT_FFT],
     output signed [1:0][FRAC_BITS:0] data_o [POINT_FFT]
 );
-    // FFT is Radix-2
-
+    // Twiddle factor instantiation
     wire signed [1:0][FRAC_BITS+1:0] TW16 [8];
     //    k   Re{W16^k}             Im{W16^k}
     assign TW16[0][0] =  32768;  //  1.0000  →  1.0 * 2^15
@@ -36,6 +35,26 @@ module top_fft #(
     assign TW16[7][0] = -30274;  // -0.9239
     assign TW16[7][1] = -12540;  // -0.3827
 
+    // Bit-reverse input data
+    wire signed [2][FRAC_BITS:0] s0_in [POINT_FFT];
+
+    assign s0_in[ 0] = data_i[ 0];  // 0000 -> 0000
+    assign s0_in[ 1] = data_i[ 8];  // 0001 -> 1000
+    assign s0_in[ 2] = data_i[ 4];  // 0010 -> 0100
+    assign s0_in[ 3] = data_i[12];  // 0011 -> 1100
+    assign s0_in[ 4] = data_i[ 2];  // 0100 -> 0010
+    assign s0_in[ 5] = data_i[10];  // 0101 -> 1010
+    assign s0_in[ 6] = data_i[ 6];  // 0110 -> 0110
+    assign s0_in[ 7] = data_i[14];  // 0111 -> 1110
+    assign s0_in[ 8] = data_i[ 1];  // 1000 -> 0001
+    assign s0_in[ 9] = data_i[ 9];  // 1001 -> 1001
+    assign s0_in[10] = data_i[ 5];  // 1010 -> 0101
+    assign s0_in[11] = data_i[13];  // 1011 -> 1101
+    assign s0_in[12] = data_i[ 3];  // 1100 -> 0011
+    assign s0_in[13] = data_i[11];  // 1101 -> 1011
+    assign s0_in[14] = data_i[ 7];  // 1110 -> 0111
+    assign s0_in[15] = data_i[15];  // 1111 -> 1111
+
     // Stage 0
     wire signed [2][FRAC_BITS:0] s0_out [POINT_FFT];
 
@@ -43,8 +62,8 @@ module top_fft #(
         for (genvar i = 0; i < 8; i = i + 1) begin
             butterfly b0 (
                 .twid_i(TW16[0]),
-                .a_i(data_i[2 * i]),
-                .b_i(data_i[2 * i + 1]),
+                .a_i(s0_in[2 * i]),
+                .b_i(s0_in[2 * i + 1]),
                 .a_o(s0_out[2 * i]),
                 .b_o(s0_out[2 * i + 1])
             );
@@ -100,7 +119,7 @@ module top_fft #(
         end
     endgenerate
 
-    // Bit-reversed output
+    // Final stage output assignment
     assign data_o = s3_out;
 
 endmodule
