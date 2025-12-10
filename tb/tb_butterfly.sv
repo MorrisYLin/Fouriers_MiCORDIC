@@ -18,7 +18,7 @@ module tb_butterfly;
     wire  signed [1:0][DATA_WIDTH-1:0]   b_o;
 
     // Instantiate DUT
-    butterfly #(
+    butterfly_comb #(
         .DATA_WIDTH(DATA_WIDTH),
         .FRAC_BITS (FRAC_BITS)
     ) dut (

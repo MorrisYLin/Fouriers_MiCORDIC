@@ -6,6 +6,7 @@ module cordic_iteration(
     input wire signed [15:0] x_in,
     input wire signed [15:0] y_in,
     input wire signed [15:0] phi, //twiddle factor
+    output reg ready,
     output wire signed [15:0] x_out,
     output wire signed [15:0] y_out
     );
@@ -51,6 +52,7 @@ module cordic_iteration(
             state <= 2'b1;
             x_temp <= 17'sh0;
             y_temp <= 17'sh0;
+            ready <= 0;
         end
         else begin
             case (state)
@@ -97,6 +99,7 @@ module cordic_iteration(
                         state <= 1'b0;
                         current_angle <= 17'sh0;
                         n <= 0;
+                        ready <= 1;
                     end else begin
                         n <= n + 1;
                     end
