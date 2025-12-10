@@ -67,7 +67,7 @@ module cordic_iteration(
     
     
     assign rotate_left = ( (signed_phi - current_angle) >= 0) ? 1'b1 : 1'b0;
-    
+    reg done;
     always @(posedge clk) begin
         if (rst) begin
             n <= 3'b0;
@@ -75,6 +75,7 @@ module cordic_iteration(
             state <= 2'b1;
             x_temp <= 17'sh0;
             y_temp <= 17'sh0;
+            done <= 1'b0;
         end
         else begin
             case (state)
@@ -93,35 +94,38 @@ module cordic_iteration(
                     y_old = y_temp;
                     
                     
-                    if (n == 0) begin
-                    
-                        if (rotate_left) begin
-                            x_temp <= x_in - (y_in >>> n);
-                            y_temp <= y_in + (x_in >>> n);
-                            current_angle <= current_angle + phi_lut[n];
+                    if (done == 0) begin
+                        if (n == 0) begin
+                        
+                            if (rotate_left) begin
+                                x_temp <= x_in - (y_in >>> n);
+                                y_temp <= y_in + (x_in >>> n);
+                                current_angle <= current_angle + phi_lut[n];
+                            end else begin
+                                x_temp <= x_in + (y_in >>> n);
+                                y_temp <= y_in - (x_in >>> n);
+                                current_angle <= current_angle - phi_lut[n];
+                            end
                         end else begin
-                            x_temp <= x_in + (y_in >>> n);
-                            y_temp <= y_in - (x_in >>> n);
-                            current_angle <= current_angle - phi_lut[n];
-                        end
-                    end else begin
-                    
-                        if (rotate_left) begin
-                            x_temp <= x_old - (y_old >>> n);
-                            y_temp <= y_old + (x_old >>> n);
-                            current_angle <= current_angle + phi_lut[n];
-                        end else begin
-                            x_temp <= x_old + (y_old >>> n);
-                            y_temp <= y_old - (x_old >>> n);
-                            current_angle <= current_angle - phi_lut[n];
+                        
+                            if (rotate_left) begin
+                                x_temp <= x_old - (y_old >>> n);
+                                y_temp <= y_old + (x_old >>> n);
+                                current_angle <= current_angle + phi_lut[n];
+                            end else begin
+                                x_temp <= x_old + (y_old >>> n);
+                                y_temp <= y_old - (x_old >>> n);
+                                current_angle <= current_angle - phi_lut[n];
+                            end
                         end
                     end
-                
+                    
                     // Advance iteration
                     if (n == 7) begin
-                        state <= 1'b0;
+                        //state <= 1'b0;
                         current_angle <= 17'sh0;
-                        n <= 0;
+                        done <= 1'b1;
+                        //n <= 0;
                     end else begin
                         n <= n + 1;
                     end
