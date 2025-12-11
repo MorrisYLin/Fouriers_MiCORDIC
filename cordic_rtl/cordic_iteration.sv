@@ -1,22 +1,22 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company:
-// Engineer:
-//
+// Company: 
+// Engineer: 
+// 
 // Create Date: 11/28/2025 05:14:26 PM
-// Design Name:
+// Design Name: 
 // Module Name: cordic_interation
-// Project Name:
-// Target Devices:
-// Tool Versions:
-// Description:
-//
-// Dependencies:
-//
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-//
+// 
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -32,28 +32,40 @@ module cordic_iteration(
 
     //wire signed [15:0] shifted_phi = $signed({1'b0, phi[15:1]});
     //wire signed [15:0] signed_phi  = -shifted_phi;
-    wire signed [15:0] signed_phi = -$signed(phi);
+    //wire signed [15:0] signed_phi = {1'b1, phi[14:0]};
+    wire signed [15:0] signed_phi = {1'b0, phi[14:0]};
+
     // Standard CORDIC atan(2^-k) angle table in Q1.15
     wire signed [15:0] phi_lut [0:7];
-
+/*    
     assign phi_lut[0] = 16'sh6488; // atan(1) =45
-    assign phi_lut[1] = 16'sh3B58; // atan(1/2) =26.5650512
+    assign phi_lut[1] = 16'sh3B58; // atan(1/2) =26.5650512 
     assign phi_lut[2] = 16'sh1F5B; // atan(1/4) =14
     assign phi_lut[3] = 16'sh0FEB; // atan(1/8)
     assign phi_lut[4] = 16'sh07FD; // atan(1/16)
     assign phi_lut[5] = 16'sh03FD; // atan(1/32)
     assign phi_lut[6] = 16'sh01FF; // atan(1/64)
     assign phi_lut[7] = 16'sh00FF; // atan(1/128)
-
+*/
+  
+    assign phi_lut[0] = 16'sh2000; // atan(1)     =  π/4
+    assign phi_lut[1] = 16'sh12E4; // atan(1/2)
+    assign phi_lut[2] = 16'sh09F9; // atan(1/4)
+    assign phi_lut[3] = 16'sh0511; // atan(1/8)
+    assign phi_lut[4] = 16'sh028B; // atan(1/16)
+    assign phi_lut[5] = 16'sh0146; // atan(1/32)
+    assign phi_lut[6] = 16'sh00A3; // atan(1/64)
+    assign phi_lut[7] = 16'sh0052; // atan(1/128)
+      
     reg signed [16:0] current_angle;
     reg [2:0] n;
     reg [1:0] state;
-    reg signed [16:0] x_temp;
-    reg signed [16:0] y_temp;
-
+    reg signed [16:0] x_temp; 
+    reg signed [16:0] y_temp; 
+    
     wire signed [15:0] angle_check;
     assign angle_check = phi_lut[n];
-
+    
     reg signed [16:0] x_old;
     reg signed [16:0] y_old;
 
@@ -61,14 +73,22 @@ module cordic_iteration(
     wire signed [33:0] y_34bits;
     assign x_34bits = (x_temp * 17'sh04DBA) >>> 15;
     assign y_34bits = (y_temp * 17'sh04DBA) >>> 15;
-
+    
     assign x_out = x_34bits[15:0];
     assign y_out = y_34bits[15:0];
+    
+    /*
+    wire signed [15:0] rot_angle_gap;
+    wire signed [15:0] no_rot_angle_gap;
+    assign rot_angle_gap = (signed_phi - (current_angle + phi_lut[n]));
+    assign no_rot_angle_gap = (signed_phi - current_angle);
+    wire [15:0] abs_no_rot = gap_no_rot[15] ? (~gap_no_rot + 1'b1) : gap_no_rot;
+    wire [15:0] abs_rot    = gap_rot[15]    ? (~gap_rot + 1'b1)    : gap_rot;
+*/
+    assign rotate_left = ~(signed_phi > current_angle);
 
-
-    assign rotate_left = ( (signed_phi - current_angle) >= 0) ? 1'b1 : 1'b0;
     reg done;
-    always @(posedge clk or posedge rst) begin
+    always @(posedge clk) begin
         if (rst) begin
             n <= 3'b0;
             current_angle <= 17'sh0;
@@ -79,7 +99,7 @@ module cordic_iteration(
         end
         else begin
             case (state)
-
+            
                 2'd0: begin
                     x_temp <= x_in;
                     y_temp <= y_in;
@@ -87,39 +107,39 @@ module cordic_iteration(
                         state <= 2'd1;
                     end
                 end
-
+                
                 2'd1: begin
                     // Capture old values
                     x_old = x_temp;
                     y_old = y_temp;
-
-
+                    
+                    
                     if (done == 0) begin
                         if (n == 0) begin
-
+                        
                             if (rotate_left) begin
                                 x_temp <= x_in - (y_in >>> n);
                                 y_temp <= y_in + (x_in >>> n);
-                                current_angle <= current_angle + phi_lut[n];
+                                current_angle <= current_angle - phi_lut[n];
                             end else begin
                                 x_temp <= x_in + (y_in >>> n);
                                 y_temp <= y_in - (x_in >>> n);
-                                current_angle <= current_angle - phi_lut[n];
+                                current_angle <= current_angle + phi_lut[n];
                             end
                         end else begin
-
+                        
                             if (rotate_left) begin
                                 x_temp <= x_old - (y_old >>> n);
                                 y_temp <= y_old + (x_old >>> n);
-                                current_angle <= current_angle + phi_lut[n];
+                                current_angle <= current_angle - phi_lut[n];
                             end else begin
                                 x_temp <= x_old + (y_old >>> n);
                                 y_temp <= y_old - (x_old >>> n);
-                                current_angle <= current_angle - phi_lut[n];
+                                current_angle <= current_angle + phi_lut[n];
                             end
                         end
                     end
-
+                    
                     // Advance iteration
                     if (n == 7) begin
                         //state <= 1'b0;
@@ -130,20 +150,20 @@ module cordic_iteration(
                         n <= n + 1;
                     end
                 end
-
-                2'd2: begin
+                                
+                2'd2: begin 
                     // k = 0.607252935
                     // 16'sh4DC0 - k value for in 1 bit sign, 15 bit frac
                     // 17'sh04DBA - k value for 1 bit sign, 1 bit int, 15 bit frac
                     //x_out <= x_34bits[15:0];
                     //y_out <= y_34bits[15:0];
-                    n <= 0;
+                    n <= 0;               
                     state <= 1'b0;
                     current_angle <= 17'sh0;
                 end
 
-            endcase
+            endcase    
         end
     end
-
+    
 endmodule
