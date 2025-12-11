@@ -22,7 +22,7 @@ module top_fft_cordic #(
     assign TW16[7] = 16'h7000;
 
     // Bit-reverse input data
-    wire signed [2][FRAC_BITS:0] s0_in [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s0_in [POINT_FFT];
 
     assign s0_in[ 0] = data_i[ 0];  // 0000 -> 0000
     assign s0_in[ 1] = data_i[ 8];  // 0001 -> 1000
@@ -71,7 +71,7 @@ module top_fft_cordic #(
     assign rst_stage[3] = (counter < 36);
 
     // Stage 0
-    wire signed [2][FRAC_BITS:0] s0_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s0_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin
@@ -88,7 +88,7 @@ module top_fft_cordic #(
     endgenerate
 
     // Stage 1
-    wire signed [2][FRAC_BITS:0] s1_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s1_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 4; i = i + 1) begin
@@ -107,7 +107,7 @@ module top_fft_cordic #(
     endgenerate
 
     // Stage 2
-    wire signed [2][FRAC_BITS:0] s2_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s2_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 2; i = i + 1) begin
@@ -126,7 +126,7 @@ module top_fft_cordic #(
     endgenerate
 
     // Stage 3
-    wire signed [2][FRAC_BITS:0] s3_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s3_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin
