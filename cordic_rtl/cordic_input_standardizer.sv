@@ -16,9 +16,9 @@ module cordic_input_standardizer #(
 
     // full-turn constant and quadrant thresholds
     localparam integer FULL_TURN = 16'd32768; // maps to 2*pi
-    localparam integer PI_HALF   = FULL_TURN/4; // 8192 -> pi/2
-    localparam integer PI        = FULL_TURN/2; // 16384 -> pi
-    localparam integer THREE_PI_HALF = 3*FULL_TURN/4; // 24576 -> 3pi/2
+    localparam integer PI_HALF   = 16'h4000;//FULL_TURN/4; // 8192 -> pi/2
+    localparam integer PI        = 16'h8000;//FULL_TURN/2; // 16384 -> pi
+    localparam integer THREE_PI_HALF = 16'hc000;//3*FULL_TURN/4; // 24576 -> 3pi/2
 
     // angle is already unsigned in [0..FULL_TURN-1], but guard against FULL_TURN input
     // Treat theta_in == FULL_TURN as 0 (wrap).
@@ -59,6 +59,6 @@ module cordic_input_standardizer #(
     assign x_out = x_pr;
     assign y_out = y_pr;
     assign theta_out = rem_angle;
-    always @(*) quadrant = q;
+    assign quadrant = q;
 
 endmodule

@@ -8,7 +8,7 @@
             "args": [
                 "-NoProfile",
                 "-Command",
-                "iverilog -g2012 -s ${input:tbTop} -o build/sim.vvp ${input:tbFile} rtl/*.sv ; if ($?) { vvp build/sim.vvp }"
+                "iverilog -g2012 -s ${input:tbTop} -o build/sim.vvp ${input:tbFile} rtl/*.sv cordic_rtl/*.sv; if ($?) { vvp build/sim.vvp }"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

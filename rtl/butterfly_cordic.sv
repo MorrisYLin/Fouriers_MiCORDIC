@@ -2,19 +2,18 @@ module butterfly_cordic #(
     parameter DATA_WIDTH = 16,
     parameter FRAC_BITS  = 15
 ) (
-    input clk_i,
-    input  signed [FRAC_BITS:0]    twid_i, //twiddle input angle
+    input                               clk_i,
+    input                                 rst,
+    input         [FRAC_BITS:0]        twid_i, //twiddle input angle
     input  signed [1:0][DATA_WIDTH-1:0]   a_i, //
     input  signed [1:0][DATA_WIDTH-1:0]   b_i, //complex # used in cordic [0] = real
-    input  rst,
     output signed [1:0][DATA_WIDTH-1:0]   a_o,
     output signed [1:0][DATA_WIDTH-1:0]   b_o
 );
     // Complex multiply, replace later with CORDIC
     localparam MUL_W = 2 * DATA_WIDTH;
 
-    wire [1:0] quadrant = 2'b0;
-
+    wire [1:0] quadrant;
     wire signed [FRAC_BITS:0] normalized_twiddle;
     wire signed [1:0][DATA_WIDTH-1:0] normalized_b_i;
 
@@ -27,16 +26,9 @@ module butterfly_cordic #(
         .theta_out(normalized_twiddle),
         .quadrant(quadrant)
     );
-//    wire signed [MUL_W-1:0] rr = b_i[0] * twid_i[0];
-//    wire signed [MUL_W-1:0] ii = b_i[1] * twid_i[1];
-//    wire signed [MUL_W-1:0] ri = b_i[0] * twid_i[1];
-//    wire signed [MUL_W-1:0] ir = b_i[1] * twid_i[0];
 
-//    wire signed [MUL_W:0] rot_re_full = rr - ii;
-//    wire signed [MUL_W:0] rot_im_full = ri + ir;
-
-    wire signed [DATA_WIDTH-1:0] b_rot_re; //= rot_re_full >>> FRAC_BITS;
-    wire signed [DATA_WIDTH-1:0] b_rot_im; //= rot_im_full >>> FRAC_BITS;
+    wire signed [DATA_WIDTH-1:0] b_rot_re;
+    wire signed [DATA_WIDTH-1:0] b_rot_im;
 
     cordic_iteration c1 (
         .clk(clk_i),
@@ -48,12 +40,8 @@ module butterfly_cordic #(
         .y_out(b_rot_im)
     );
 
-    // End complex multiply
-
-    // factor down by k, need a ready bit out of cordic_iteration so data into fft isnt gar
-
-    wire signed [DATA_WIDTH-1:0] b_re_final; //= rot_re_full >>> FRAC_BITS;
-    wire signed [DATA_WIDTH-1:0] b_im_final; //= rot_im_full >>> FRAC_BITS;
+    wire signed [DATA_WIDTH-1:0] b_re_final;
+    wire signed [DATA_WIDTH-1:0] b_im_final;
 
     wire signed [1:0][DATA_WIDTH:0] a_sum;
     wire signed [1:0][DATA_WIDTH:0] b_sum;
