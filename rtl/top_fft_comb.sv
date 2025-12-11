@@ -36,7 +36,7 @@ module top_fft_comb #(
     assign TW16[7][1] = -12540;  // -0.3827
 
     // Bit-reverse input data
-    wire signed [2][FRAC_BITS:0] s0_in [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s0_in [POINT_FFT];
 
     assign s0_in[ 0] = data_i[ 0];  // 0000 -> 0000
     assign s0_in[ 1] = data_i[ 8];  // 0001 -> 1000
@@ -56,7 +56,7 @@ module top_fft_comb #(
     assign s0_in[15] = data_i[15];  // 1111 -> 1111
 
     // Stage 0
-    wire signed [2][FRAC_BITS:0] s0_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s0_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin
@@ -71,7 +71,7 @@ module top_fft_comb #(
     endgenerate
 
     // Stage 1
-    wire signed [2][FRAC_BITS:0] s1_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s1_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 4; i = i + 1) begin
@@ -88,7 +88,7 @@ module top_fft_comb #(
     endgenerate
 
     // Stage 2
-    wire signed [2][FRAC_BITS:0] s2_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s2_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 2; i = i + 1) begin
@@ -105,7 +105,7 @@ module top_fft_comb #(
     endgenerate
 
     // Stage 3
-    wire signed [2][FRAC_BITS:0] s3_out [POINT_FFT];
+    wire signed [1:0][FRAC_BITS:0] s3_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin
@@ -121,5 +121,44 @@ module top_fft_comb #(
 
     // Final stage output assignment
     assign data_o = s3_out;
+
+
+    // ------------------------------------------------
+    // VCD-friendly aliases for stage outputs
+    //   Expose s0_out..s3_out per bin as packed vectors
+    //   so Surfer can see them (no unpacked arrays).
+    // ------------------------------------------------
+    genvar k;
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_0
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s0_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s0_out[k][1];
+        end
+    endgenerate
+
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_1
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s1_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s1_out[k][1];
+        end
+    endgenerate
+
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_2
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s2_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s2_out[k][1];
+        end
+    endgenerate
+
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_3
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s3_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s3_out[k][1];
+        end
+    endgenerate
 
 endmodule

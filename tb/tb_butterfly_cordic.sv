@@ -94,7 +94,7 @@ module tb_butterfly_cordic;
             // Print I/O at this time
             print_complex("a_i", a_i[0], a_i[1]);
             print_complex("b_i", b_i[0], b_i[1]);
-            print_complex("b_rot", dut.b_re_final[0], dut.b_re_final[1]);
+            print_complex("b_rot", dut.b_rot_re[0], dut.b_rot_re[1]);
             print_complex("a_o", a_o[0], a_o[1]);
             print_complex("b_o", b_o[0], b_o[1]);
         end

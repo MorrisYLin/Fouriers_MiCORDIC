@@ -4,36 +4,22 @@ module top_fft_cordic #(
     parameter FRAC_BITS = 15,
     parameter POINT_FFT = 1 << POINT_FFT_POW2
 ) (
-    // input clk_i,
+    input clk_i,
+    input start_i,
+    input rst_i,
     input  signed [1:0][FRAC_BITS:0] data_i [POINT_FFT],
-    output signed [1:0][FRAC_BITS:0] data_o [POINT_FFT]
+    output reg signed [1:0][FRAC_BITS:0] data_o [POINT_FFT]
 );
-    // Twiddle factor instantiation
-    wire signed [1:0][FRAC_BITS+1:0] TW16 [8];
-    //    k   Re{W16^k}             Im{W16^k}
-    assign TW16[0][0] =  32768;  //  1.0000  →  1.0 * 2^15
-    assign TW16[0][1] =      0;  //  0.0000
-
-    assign TW16[1][0] =  30274;  //  0.9239  →  round(0.9239 * 2^15)
-    assign TW16[1][1] = -12540;  // -0.3827
-
-    assign TW16[2][0] =  23170;  //  0.7071
-    assign TW16[2][1] = -23170;  // -0.7071
-
-    assign TW16[3][0] =  12540;  //  0.3827
-    assign TW16[3][1] = -30274;  // -0.9239
-
-    assign TW16[4][0] =      0;  //  0.0000
-    assign TW16[4][1] = -32768;  // -1.0000
-
-    assign TW16[5][0] = -12540;  // -0.3827
-    assign TW16[5][1] = -30274;  // -0.9239
-
-    assign TW16[6][0] = -23170;  // -0.7071
-    assign TW16[6][1] = -23170;  // -0.7071
-
-    assign TW16[7][0] = -30274;  // -0.9239
-    assign TW16[7][1] = -12540;  // -0.3827
+    // Twiddle factor instantiation, angle
+    wire signed [FRAC_BITS:0] TW16 [8];
+    assign TW16[0] = 16'h0000;
+    assign TW16[1] = 16'h1000;
+    assign TW16[2] = 16'h2000;
+    assign TW16[3] = 16'h3000;
+    assign TW16[4] = 16'h4000;
+    assign TW16[5] = 16'h5000;
+    assign TW16[6] = 16'h6000;
+    assign TW16[7] = 16'h7000;
 
     // Bit-reverse input data
     wire signed [2][FRAC_BITS:0] s0_in [POINT_FFT];
@@ -55,13 +41,44 @@ module top_fft_cordic #(
     assign s0_in[14] = data_i[ 7];  // 1110 -> 0111
     assign s0_in[15] = data_i[15];  // 1111 -> 1111
 
+    // FSM
+    reg [5:0] counter;
+
+    always @ (posedge clk_i or posedge rst_i) begin
+        if (start_i) begin
+            counter <= counter + 1;
+        end
+
+        if (counter != 0) begin
+            if (counter == 70) begin
+                counter <= 0;
+                for (int i = 0; i < 16; i = i + 1) begin
+                    data_o[i] = s3_out[i];
+                end
+            end else
+                counter <= counter + 1;
+        end
+
+        if (rst_i) begin
+            counter <= 0;
+        end
+    end
+
+    wire [3:0] rst_stage;
+    assign rst_stage[0] = !(counter != 0);
+    assign rst_stage[1] = (counter < 12 );
+    assign rst_stage[2] = (counter < 24);
+    assign rst_stage[3] = (counter < 36);
+
     // Stage 0
     wire signed [2][FRAC_BITS:0] s0_out [POINT_FFT];
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin
-            butterfly b0 (
+            butterfly_cordic b0 (
+                .clk_i(clk_i),
                 .twid_i(TW16[0]),
+                .rst_i(rst_stage[0]),
                 .a_i(s0_in[2 * i]),
                 .b_i(s0_in[2 * i + 1]),
                 .a_o(s0_out[2 * i]),
@@ -76,8 +93,10 @@ module top_fft_cordic #(
     generate
         for (genvar i = 0; i < 4; i = i + 1) begin
             for (genvar j = 0; j < 2; j = j + 1) begin
-                butterfly b1 (
+                butterfly_cordic b1 (
+                    .clk_i(clk_i),
                     .twid_i(TW16[4 * j]),
+                    .rst_i(rst_stage[1]),
                     .a_i(s0_out[4 * i + j]),
                     .b_i(s0_out[4 * i + j + 2]),
                     .a_o(s1_out[4 * i + j]),
@@ -93,8 +112,10 @@ module top_fft_cordic #(
     generate
         for (genvar i = 0; i < 2; i = i + 1) begin
             for (genvar j = 0; j < 4; j = j + 1) begin
-                butterfly b2 (
+                butterfly_cordic b2 (
+                    .clk_i(clk_i),
                     .twid_i(TW16[2 * j]),
+                    .rst_i(rst_stage[2]),
                     .a_i(s1_out[8 * i + j]),
                     .b_i(s1_out[8 * i + 4 + j]),
                     .a_o(s2_out[8 * i + j]),
@@ -109,8 +130,10 @@ module top_fft_cordic #(
 
     generate
         for (genvar i = 0; i < 8; i = i + 1) begin
-            butterfly b3 (
+            butterfly_cordic b3 (
+                .clk_i(clk_i),
                 .twid_i(TW16[i]),
+                .rst_i(rst_stage[3]),
                 .a_i(s2_out[i]),
                 .b_i(s2_out[i + 8]),
                 .a_o(s3_out[i]),
@@ -119,7 +142,41 @@ module top_fft_cordic #(
         end
     endgenerate
 
-    // Final stage output assignment
-    assign data_o = s3_out;
+    // ------------------------------------------------
+    // VCD-friendly aliases for stage outputs
+    //   Expose s0_out..s3_out per bin as packed vectors
+    //   so Surfer can see them (no unpacked arrays).
+    // ------------------------------------------------
+    genvar k;
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_0
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s0_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s0_out[k][1];
+        end
+    endgenerate
 
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_1
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s1_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s1_out[k][1];
+        end
+    endgenerate
+
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_2
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s2_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s2_out[k][1];
+        end
+    endgenerate
+
+    generate
+        for (k = 0; k < POINT_FFT; k++) begin : G_VCD_STAGE_3
+            // Stage 0
+            wire signed [FRAC_BITS:0] s0_out_re = s3_out[k][0];
+            wire signed [FRAC_BITS:0] s0_out_im = s3_out[k][1];
+        end
+    endgenerate
 endmodule

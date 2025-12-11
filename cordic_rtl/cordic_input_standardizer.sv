@@ -10,8 +10,8 @@ module cordic_input_standardizer #(
     input         [FRAC_BITS:0] theta_in,    // unsigned: 0 .. 32767 -> 0 .. 2*pi (FULL_TURN)
     output signed [FRAC_BITS:0] x_out,      // Q1.15 signed
     output signed [FRAC_BITS:0] y_out,      // Q1.15 signed
-    output        [FRAC_BITS:0] theta_out,   // unsigned in [0 .. PI/2) (0 .. 8191)
-    output reg    [1:0]  quadrant     // 0..3
+    output        [FRAC_BITS:0] theta_out   // unsigned in [0 .. PI/2) (0 .. 8191)
+    // output reg    [1:0]  quadrant     // 0..3
 );
 
     // full-turn constant and quadrant thresholds
@@ -24,7 +24,7 @@ module cordic_input_standardizer #(
     localparam [15:0] ANG90  = 16'h4000;
     localparam [15:0] ANG180 = 16'h8000;
     localparam [15:0] ANG270 = 16'hC000;
-    
+
     // angle is already unsigned in [0..FULL_TURN-1], but guard against FULL_TURN input
     // Treat theta_in == FULL_TURN as 0 (wrap).
     wire [FRAC_BITS:0] angle_norm = (theta_in == FULL_TURN) ? 16'd0 : theta_in;
@@ -112,10 +112,9 @@ always @(*) begin
     endcase
 end
 
-    
+
     assign x_out = x_pr;
     assign y_out = y_pr;
     assign theta_out = rem_angle;
-    always @(*) quadrant = q;
 
 endmodule
